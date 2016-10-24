@@ -33,8 +33,8 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 
-const char *ssid = "SSID";
-const char *password = "PASSWORD";
+const char *ssid = "NietetowaneWiFi";
+const char *password = "PiotrSkaluba69";
 
 ESP8266WebServer server(80);
 
@@ -43,9 +43,6 @@ const int led = 13;
 void handleRoot() {
 	digitalWrite(led, 1);
 	char temp[1000];
-	int sec = millis() / 1000;
-	int min = sec / 60;
-	int hr = min / 60;
 
 	snprintf(temp, 1000,
 "<html>\
@@ -89,32 +86,17 @@ void handleNotFound() {
 }
 
 void setup(void) {
+	delay(1000);
 	Serial.begin(115200);
-	WiFi.enableAP(true);
-	WiFi.begin(ssid,password);
-	Serial.println("");
+	Serial.println();
+	Serial.print("Configuring access point...");
+	/* You can remove the password parameter if you want the AP to be open. */
+	WiFi.softAP(ssid, password);
 
-	// Wait for connection
-	while (WiFi.status() != WL_CONNECTED) {
-		delay(500);
-		Serial.print(".");
-	}
-
-	Serial.println("");
-	Serial.print("Connected to ");
-	Serial.println(ssid);
-	Serial.print("IP address: ");
-	Serial.println(WiFi.localIP());
-
-	if (MDNS.begin("esp8266")) {
-		Serial.println("MDNS responder started");
-	}
-
+	IPAddress myIP = WiFi.softAPIP();
+	Serial.print("AP IP address: ");
+	Serial.println(myIP);
 	server.on("/", handleRoot);
-	server.on("/inline", []() {
-		server.send(200, "text/plain", "this works as well");
-	});
-	server.onNotFound(handleNotFound);
 	server.begin();
 	Serial.println("HTTP server started");
 }
