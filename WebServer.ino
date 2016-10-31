@@ -32,28 +32,66 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <FS.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+#define ONE_WIRE_PIN 4
 
 const char *ssid = "NietetowaneWiFi";
 const char *password = "PiotrSkaluba69";
 
-ESP8266WebServer server(80);
 
-const int led = 13;
+ESP8266WebServer server(80);
+File file;
+OneWire oneWire(ONE_WIRE_PIN);
+
+DallasTemperature sensors(&oneWire);
+
+
+int ReadTemperature() {
+	sensors.requestTemperatures(); // Send the command to get temperatures
+	int temperature = sensors.getTempCByIndex(0);
+	Serial.println(temperature);
+	
+
+	return temperature;
+}
+
 
 void handleRoot() {
-	digitalWrite(led, 1);
-	char temp[1000];
+	char temp[2000];
 
-	snprintf(temp, 1000,
+	int temperature = ReadTemperature();
+	/*
+	SPIFFS.begin();
+
+	file = SPIFFS.open("/ReklameScript-Regular_DEMO.otf", "r");
+	if (!file) {
+		Serial.println("file open failed");
+	}
+	else {
+		Serial.println("File successful opened");
+	}
+*/
+
+	snprintf(temp, 2000,
 "<html>\
   <head>\
     <title>ESP8266 Demo</title>\
     <style>\
-      body { background-color: #ffffff; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }\
+	  @font-face {\
+			font-family: Reklame;\
+			src: url('/ReklameScript-Regular_DEMO.otf');\
+		}\
+	  #logo {font-family: 'Reklame'; font-size:300%;}\
+      body { background-color: #000000; font-family: Arial, Helvetica, Sans-Serif; Color: #FFFFFF; }\
 	  input[type='text'] { border-radius: 10px; }\
     </style>\
   </head>\
   <body>\
+	<div id='logo' align='center'>SousVide</div>\
+	Temperature: %02d\
     <form action = 'setwifipass'>\
     First name : <br>\
     <input type = 'text' name = 'SSID' value = 'CurrentSsid'><br>\
@@ -61,10 +99,10 @@ void handleRoot() {
     <input type = 'text' name = 'Pass' value = 'CurrentPass'><br><br>\
     <input type = 'submit' value = 'Submit'>\
   </body>\
-</html>"
-	);
+</html>", temperature);
 	server.send(200, "text/html", temp);
-	digitalWrite(led, 0);
+
+	file.close();
 }
 
 void handleNotFound() {
@@ -82,16 +120,16 @@ void handleNotFound() {
 	}
 
 	server.send(404, "text/plain", message);
-	digitalWrite(led, 0);
 }
 
 void setup(void) {
 	delay(1000);
 	Serial.begin(115200);
-	Serial.println();
-	Serial.print("Configuring access point...");
-	/* You can remove the password parameter if you want the AP to be open. */
+	
+	sensors.begin();
+
 	WiFi.softAP(ssid, password);
+	
 
 	IPAddress myIP = WiFi.softAPIP();
 	Serial.print("AP IP address: ");
@@ -99,6 +137,7 @@ void setup(void) {
 	server.on("/", handleRoot);
 	server.begin();
 	Serial.println("HTTP server started");
+	
 }
 
 void loop(void) {
