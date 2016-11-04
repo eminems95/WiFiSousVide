@@ -37,11 +37,11 @@
 #include <DallasTemperature.h>
 #include <PID_v1.h>
 
-#define ONE_WIRE_PIN 4
-#define RELAY_PIN 5
+#define ONE_WIRE_PIN 14
+#define RELAY_PIN 13
 
-const char *ssid = "NietetowaneWiFi";
-const char *password = "PiotrSkaluba69";
+const char *ssid = "Sous Vide";
+const char *password = "danisousvide";
 
 
 ESP8266WebServer server(80);
@@ -56,7 +56,7 @@ double setpoint,
 float Kp = 4,
 		Ki = 5,
 		Kd = 5;
-int WindowSize = 600;
+int WindowSize = 1000;
 unsigned long windowStartTime;
 
 
@@ -119,8 +119,8 @@ temp += "<html>";
 		temp += "}";
 		temp += "#logo {font-family: 'Century Gothic'; font-size:300%;}";
 		temp += "body { background-color: #000000; font-family: Arial, Helvetica, Sans-Serif; Color: #FFFFFF; }";
-		temp += "input[type='text'] { border: 0px;  height: 10%; margin-bottom: 5%}";
-		temp += "input[type='submit'] { width: 30%; height: 10%}";
+		temp += "input[type='text'] { border: 0px; margin-bottom: 5%}";
+		temp += "input[type='submit'] { width: 30%; height: 4%}";
 				//Toggle button start
 			temp += "\n .switch { position: relative; display: inline-block; width: 60px; height: 34px; }";
 			temp += "\n .switch input{ display:none; }";
@@ -132,12 +132,12 @@ temp += "<html>";
 				//Toggle button end
 			
 				//Tab view start
-			temp += "\n ul.tab{ list-style-type: none; margin: 0; padding: 0; overflow: hidden; border: 1px solid #ccc; background-color: #f1f1f1;}";
+			temp += "\n ul.tab{ list-style-type: none; margin: 0; width: 50%; padding: 0; overflow: hidden; border: 1px solid #ccc; background-color: #f1f1f1;}";
 			temp += "\n ul.tab li{ float: left; }";
 			temp += "\n ul.tab li a{display: inline-block; color: black; text-align: center; padding: 14px 16px; text-decoration: none; transition: 0.3s; font-size: 17px;}";
 			temp += "\n ul.tab li a:hover{ background-color: #ddd; }";
 			temp += "\n ul.tab li a:focus, .active{ background-color: #ccc;}";
-			temp += "\n .tabcontent{ display: none; padding: 6px 12px; border: 1px solid #ccc; border-top: none;}";
+			temp += "\n .tabcontent{ display: none; width: 47%; padding: 6px 12px; border: 1px solid #ccc; border-top: none;}";
 			
 		temp += "</style>";
 	
@@ -170,12 +170,12 @@ temp += "<html>";
 				//Tab view HTML start
 
 				temp += "<ul class = 'tab'>";
-				temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'London')\">London</a></li>";
-				temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Paris')\">Paris</a></li>";
+				temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Info')\">Info</a></li>";
+				temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Manual')\">Manual</a></li>";
 				temp += "</ul>";
 
-				temp += "<div id = 'London' class = 'tabcontent'>";
-				temp += "<h3>London</h3>";
+				temp += "<div id = 'Info' class = 'tabcontent'>";
+				temp += "<h3>Info</h3>";
 				
 								temp += "<div align='center'>";
 								temp += "<br>Setpoint: ";
@@ -186,19 +186,21 @@ temp += "<html>";
 
 				temp += "</div>";
 
-				temp += "<div id = 'Paris' class = 'tabcontent'>";
-				temp += "<h3>Paris</h3>";
+				temp += "<div id = 'Manual' class = 'tabcontent'>";
+				temp += "<h3>Manual</h3>";
 								
-								temp += "<div align='center'>";
+				
+					temp += "<div align='center'>";
 								temp += "<form action = 'http://192.168.4.1/submit' method = 'POST'>";
-								temp += "	F_name: <input type = 'text' name = 'fname'><br>";
+								temp += "	Setpoint: <input type = 'text' name = 'fname'><br>";
 								temp += "	<input type = 'submit' value = 'Send'>";
 
-								temp += "<label class = 'switch'>";
+								/*temp += "<label class = 'switch'>";
 								temp += "<input type = 'checkbox'>";
 								temp += "<div class = 'slider'></div>";
 								temp += "</label>";
-				temp += "</div>";
+								*/
+					temp += "</div>";
 			temp += "</div>";
 
 				//Tab view HTML end
