@@ -56,7 +56,7 @@ double setpoint,
 float Kp = 4,
 		Ki = 5,
 		Kd = 5;
-int WindowSize = 800;
+int WindowSize = 600;
 unsigned long windowStartTime;
 
 
@@ -167,7 +167,6 @@ temp += "<html>";
 	temp += "</head>";
 	temp += "<body onload='updateTemp'>";
 		temp += "<div id='logo' align='center'>SousVide</div>";
-
 				//Tab view HTML start
 
 				temp += "<ul class = 'tab'>";
@@ -177,16 +176,19 @@ temp += "<html>";
 
 				temp += "<div id = 'London' class = 'tabcontent'>";
 				temp += "<h3>London</h3>";
+				
 								temp += "<div align='center'>";
 								temp += "<br>Setpoint: ";
 								temp += "<div align='center' id = 'currentSetpoint'>"; temp += "</div>";
 								temp += "<br>Temperature: ";
 								temp += "<div align='center' id = 'currentTemp'>"; temp += "</div>";
 								temp += "</div><br>Heater state: "; temp += stateInfo; temp += "<br>";
+
 				temp += "</div>";
 
 				temp += "<div id = 'Paris' class = 'tabcontent'>";
 				temp += "<h3>Paris</h3>";
+								
 								temp += "<div align='center'>";
 								temp += "<form action = 'http://192.168.4.1/submit' method = 'POST'>";
 								temp += "	F_name: <input type = 'text' name = 'fname'><br>";
@@ -196,9 +198,8 @@ temp += "<html>";
 								temp += "<input type = 'checkbox'>";
 								temp += "<div class = 'slider'></div>";
 								temp += "</label>";
-								temp += "</div>" ;
 				temp += "</div>";
-
+			temp += "</div>";
 
 				//Tab view HTML end
 			
