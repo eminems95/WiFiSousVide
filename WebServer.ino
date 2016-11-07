@@ -36,28 +36,37 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <PID_v1.h>
+#include <Countimer.h>
 
-#define ONE_WIRE_PIN 14
-#define RELAY_PIN 13
+#define ONE_WIRE_PIN 4
+#define RELAY_PIN 5
 
-const char *ssid = "Sous Vide";
-const char *password = "danisousvide";
+const char *ssid = "NietetowaneWiFi";
+const char *password = "PiotrSkaluba69";
 
 
 ESP8266WebServer server(80);
 File file;
 OneWire oneWire(ONE_WIRE_PIN);
 DallasTemperature sensors(&oneWire);
+Countimer countimer;
+
 
 double setpoint,
 		input,
 		output;
 
-float Kp = 4,
-		Ki = 5,
-		Kd = 5;
-int WindowSize = 1000;
+float Kp = 850,
+		Ki = 0.5,
+		Kd = 0.1;
+int WindowSize = 10000;
 unsigned long windowStartTime;
+int hours, minutes;
+long previousMillis = 0;
+
+bool heatingState=false, 
+		opState;
+volatile long onTime = 0;
 
 
 PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
@@ -65,29 +74,52 @@ PID myPID(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 String temp;
 String stateInfo;
 
+
+
 float ReadTemperature() {
 	sensors.requestTemperatures(); // Send the command to get temperatures
 	float temperature = sensors.getTempCByIndex(0);
 	Serial.println(temperature);
-	
-
 	return temperature;
 }
 
 
-void RelayOperation() {
-	unsigned long now = millis();
-	if (now - windowStartTime>WindowSize)
-		windowStartTime += WindowSize;
+void RunPWM() {
+		if (opState == 0)
+		{
+			RelayState(LOW, "off");
+		}
+		else
+		{
+			if(input>=setpoint)
+				RelayOperation();
+		}
+}
 
-	if (output > now - windowStartTime) {
-		digitalWrite(RELAY_PIN, HIGH);
-		stateInfo = "Heater turned on";
-	}
-	else {
-		digitalWrite(RELAY_PIN, LOW);
-		stateInfo = "Heater turned off";
-	}
+void RelayState() {
+	digitalWrite(RELAY_PIN, LOW);
+	stateInfo = "Heater turned off";
+}
+
+void RelayState(bool state, String message) {
+	digitalWrite(RELAY_PIN, state);
+	stateInfo = "Heater turned "+message;
+}
+
+void RelayOperation() {
+		unsigned long now = millis();
+
+		if (now - windowStartTime > WindowSize)
+			windowStartTime += WindowSize;
+
+		if (output > (now - windowStartTime)) {
+			RelayState(HIGH, "on");
+		}
+		else
+		{
+			RelayState(LOW, "off");
+		}
+	
 
 }
 
@@ -120,6 +152,7 @@ temp += "<html>";
 		temp += "#logo {font-family: 'Century Gothic'; font-size:300%;}";
 		temp += "body { background-color: #000000; font-family: Arial, Helvetica, Sans-Serif; Color: #FFFFFF; }";
 		temp += "input[type='text'] { border: 0px; margin-bottom: 5%}";
+		temp += "input[type='number'] { border: 0px; margin-bottom: 5%; width:10%}";
 		temp += "input[type='submit'] { width: 30%; height: 4%}";
 				//Toggle button start
 			temp += "\n .switch { position: relative; display: inline-block; width: 60px; height: 34px; }";
@@ -162,6 +195,16 @@ temp += "<html>";
 			temp += "}";
 
 
+			temp += "$(function() {";
+				temp += "$('form').submit(function() {";
+					temp += "$.post('http://192.168.4.1/submit', function() {";
+						temp += "window.location = '/';";
+						temp += "});";
+					temp += "return false;";
+				temp += "});";
+			temp += "});";
+
+
 	temp += "</script>";
 
 	temp += "</head>";
@@ -169,40 +212,42 @@ temp += "<html>";
 		temp += "<div id='logo' align='center'>SousVide</div>";
 				//Tab view HTML start
 
-				temp += "<ul class = 'tab'>";
-				temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Info')\">Info</a></li>";
-				temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Manual')\">Manual</a></li>";
-				temp += "</ul>";
+		temp += "<div align = 'center'>";	//1 - begin
+					temp += "<ul class = 'tab'>";
+					temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Info')\">Info</a></li>";
+					temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Manual')\">Manual</a></li>";
+					temp += "</ul>";
 
-				temp += "<div id = 'Info' class = 'tabcontent'>";
-				temp += "<h3>Info</h3>";
+					temp += "<div id = 'Info' class = 'tabcontent'>";	//1.1 - begin
+					temp += "<h3>Info</h3>";
 				
-								temp += "<div align='center'>";
-								temp += "<br>Setpoint: ";
-								temp += "<div align='center' id = 'currentSetpoint'>"; temp += "</div>";
-								temp += "<br>Temperature: ";
-								temp += "<div align='center' id = 'currentTemp'>"; temp += "</div>";
-								temp += "</div><br>Heater state: "; temp += stateInfo; temp += "<br>";
+									temp += "<div align='center'>";
+									temp += "<br>Setpoint: ";
+									temp += "<div align='center' id = 'currentSetpoint'>"; temp += "</div>";
+									temp += "<br>Temperature: ";
+									temp += "<div align='center' id = 'currentTemp'>"; temp += "</div>";
+									temp += "</div><br>Heater state: "; temp += stateInfo; temp += "<br>";
 
-				temp += "</div>";
+					temp += "</div>";		//1.1 - end
 
-				temp += "<div id = 'Manual' class = 'tabcontent'>";
-				temp += "<h3>Manual</h3>";
+					temp += "<div id = 'Manual' class = 'tabcontent'>";	//1.2 - begin
+					temp += "<h3>Manual</h3>";
 								
 				
-					temp += "<div align='center'>";
-								temp += "<form action = 'http://192.168.4.1/submit' method = 'POST'>";
-								temp += "	Setpoint: <input type = 'text' name = 'fname'><br>";
-								temp += "	<input type = 'submit' value = 'Send'>";
+						temp += "<div align='center'>";	//1.2.1 - begin
+									temp += "<form action = 'http://192.168.4.1/submit' method = 'POST'>";
+									temp += "	Setpoint: <input type = 'number' name = 'setpoint' min='0'><br>";
+									temp += "	Timer(hh:mm): <input type = 'number' name = 'hours' min='0'>:<input type = 'number' name = 'minutes' min='0'><br>";
+									temp += "	<input type = 'submit' value = 'Send'>";
 
-								/*temp += "<label class = 'switch'>";
-								temp += "<input type = 'checkbox'>";
-								temp += "<div class = 'slider'></div>";
-								temp += "</label>";
-								*/
-					temp += "</div>";
-			temp += "</div>";
-
+									/*temp += "<label class = 'switch'>";
+									temp += "<input type = 'checkbox'>";
+									temp += "<div class = 'slider'></div>";
+									temp += "</label>";
+									*/
+						temp += "</div>";	//1.2.1 - end
+				temp += "</div>";			//1.2 - end
+			temp += "</div>";				//1 - end
 				//Tab view HTML end
 			
 		temp += "</body>";
@@ -211,10 +256,17 @@ temp += "</html>";
 server.send(200, "text/html", temp);
 }
 void handleSubmit() {
-	String getData = server.arg("fname");
 
-	setpoint = getData.toFloat();
-	
+	heatingState = !heatingState;
+
+	if (heatingState == true) {
+		setpoint = server.arg("setpoint").toFloat();
+		hours = server.arg("hours").toInt();
+		minutes = server.arg("minutes").toInt();
+	}
+	else {
+		RelayState(LOW, "off");
+	}
 }
 
 void handleNotFound() {
@@ -239,17 +291,20 @@ void setup(void) {
 	pinMode(RELAY_PIN, OUTPUT);
 	Serial.begin(115200);
 	
+	countimer.setCounter(hours, minutes, 0, countimer.COUNT_DOWN,RelayState );
+
+	//PWMSimulation.attach(0.015, RunPWM);
 	sensors.begin();
 
 	WiFi.softAP(ssid, password);
 	
 	//tell the PID to range between 0 and the full window size
 	setpoint = 40.00;
-	myPID.SetOutputLimits(0, WindowSize);
+	input = 0;
 
+	myPID.SetOutputLimits(0, WindowSize);
 	//turn the PID on
 	myPID.SetMode(AUTOMATIC);
-
 
 	IPAddress myIP = WiFi.softAPIP();
 	Serial.print("AP IP address: ");
@@ -262,19 +317,27 @@ void setup(void) {
 }
 
 void loop(void) {
-	input = ReadTemperature();
-
-	Serial.println("Input: ");
-	Serial.print(input);
-	Serial.println("Output: ");
-	Serial.print(output);
-	Serial.println("Setpoint: ");
-	Serial.print(setpoint);
+	
+	
+	Serial.print("Input: ");
+	Serial.println(input);
+	Serial.print("Output: ");
+	Serial.println(output);
+	Serial.print("Setpoint: ");
+	Serial.println(setpoint);
+	Serial.print("Heating state: ");
+	Serial.println(heatingState);
 	Serial.println("---------");
+	
+	
+	if (heatingState == true) {
+		input = ReadTemperature();
+		myPID.Compute();
+		RelayOperation();
 
-	myPID.Compute();
+			
+	}
 
-	RelayOperation();
 
 	server.handleClient();
 }
