@@ -95,6 +95,7 @@ void handleRoot() {
 	char temporary[2000];
 	temp = "";
 
+
 	temp += "<html>";
 	temp += "<head>";
 	temp += "<title>ESP8266 Demo</title>";
