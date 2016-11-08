@@ -1,33 +1,3 @@
-/*
-* Copyright (c) 2015, Majenko Technologies
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without modification,
-* are permitted provided that the following conditions are met:
-*
-* * Redistributions of source code must retain the above copyright notice, this
-*   list of conditions and the following disclaimer.
-*
-* * Redistributions in binary form must reproduce the above copyright notice, this
-*   list of conditions and the following disclaimer in the documentation and/or
-*   other materials provided with the distribution.
-*
-* * Neither the name of Majenko Technologies nor the names of its
-*   contributors may be used to endorse or promote products derived from
-*   this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
@@ -47,7 +17,7 @@ const char *password = "danisousvide";
 
 
 ESP8266WebServer server(80);
-File file;
+File fsUploadFile;
 OneWire oneWire(ONE_WIRE_PIN);
 DallasTemperature sensors(&oneWire);
 Countimer countimer;
@@ -83,19 +53,6 @@ float ReadTemperature() {
 	float temperature = sensors.getTempCByIndex(0);
 	Serial.println(temperature);
 	return temperature;
-}
-
-
-void RunPWM() {
-		if (opState == 0)
-		{
-			RelayState(LOW, "off");
-		}
-		else
-		{
-			if(input>=setpoint)
-				RelayOperation();
-		}
 }
 
 void RefreshClock() {
@@ -134,15 +91,215 @@ void RelayOperation() {
 
 }
 
+void handleRoot() {
+	char temporary[2000];
+	temp = "";
 
+	temp += "<html>";
+	temp += "<head>";
+	temp += "<title>ESP8266 Demo</title>";
+	temp += "<style>";
+	temp += "@font-face {";
+	temp += "font-family: Reklame";
+	temp += "src: url('/ReklameScript-Regular_DEMO.otf')";
+	temp += "}";
+	temp += "#logo {font-family: 'Century Gothic'; font-size:300%;}";
+	temp += "body { background-color: #000000; font-family: Arial, Helvetica, Sans-Serif; Color: #FFFFFF; }";
+	temp += "input[type='text'] { border: 0px; margin-bottom: 5%}";
+	temp += "input[type='number'] { border: 0px; margin-bottom: 5%; width:10%}";
+	temp += "input[type='submit'] { width: 30%; height: 4%}";
+	//Toggle button start
+	temp += "\n .switch { position: relative; display: inline-block; width: 60px; height: 34px; }";
+	temp += "\n .switch input{ display:none; }";
+	temp += "\n .slider{ position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; -webkit-transition: .4s; transition: .4s; }";
+	temp += "\n .slider:before{ position: absolute; content: ''; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; -webkit-transition: .4s; transition: .4s; }";
+	temp += "\n input:checked + .slider{ background-color: #2196F3; }";
+	temp += "\n input:focus + .slider{ box-shadow: 0 0 1px #2196F3; }";
+	temp += "\n input:checked + .slider:before{ -webkit-transform: translateX(26px); -ms-transform: translateX(26px); transform: translateX(26px); }";
+	//Toggle button end
+
+	//Tab view start
+	temp += "\n ul.tab{ list-style-type: none; margin: 0; width: 50%; padding: 0; overflow: hidden; border: 1px solid #ccc; background-color: #f1f1f1;}";
+	temp += "\n ul.tab li{ float: left; }";
+	temp += "\n ul.tab li a{display: inline-block; color: black; text-align: center; padding: 14px 16px; text-decoration: none; transition: 0.3s; font-size: 17px;}";
+	temp += "\n ul.tab li a:hover{ background-color: #ddd; }";
+	temp += "\n ul.tab li a:focus, .active{ background-color: #ccc;}";
+	temp += "\n .tabcontent{ display: none; width: 47%; padding: 6px 12px; border: 1px solid #ccc; border-top: none;}";
+
+	temp += "</style>";
+
+	temp += "<script type = 'text/javascript' >";
+	temp += "window.setInterval(function updateTemp(){";
+	temp += "document.getElementById('currentTemp').innerHTML = '"; temp += input; temp += "';";
+	temp += "document.getElementById('currentSetpoint').innerHTML = '"; temp += setpoint; temp += "';";
+	temp += "}, 1000); ";
+
+	temp += "function openCity(evt, cityName) {";
+	temp += "	var i, tabcontent, tablinks;";
+	temp += "	tabcontent = document.getElementsByClassName('tabcontent');";
+	temp += "	for (i = 0; i < tabcontent.length; i++) {";
+	temp += "		tabcontent[i].style.display = 'none';";
+	temp += "	}";
+	temp += "	tablinks = document.getElementsByClassName('tablinks');";
+	temp += "	for (i = 0; i < tablinks.length; i++) {";
+	temp += "		tablinks[i].className = tablinks[i].className.replace(' active', '');";
+	temp += "	}";
+	temp += "	document.getElementById(cityName).style.display = 'block';";
+	temp += "	evt.currentTarget.className += ' active';";
+	temp += "}";
+
+
+	temp += "$(function() {";
+	temp += "	$('form').submit(function() {";
+	temp += "		$.post('http://192.168.4.1/submit', function() {";
+	temp += "			window.location = 'http://192.168.4.1/';";
+	temp += "		});";
+	temp += "		return false;";
+	temp += "	});";
+	temp += "});";
+
+
+	temp += "</script>";
+
+	temp += "</head>";
+	temp += "<body onload='updateTemp'>";
+	temp += "<div id='logo' align='center'><img src='logo.jpg'></div>";
+	//Tab view HTML start
+
+	temp += "<div align = 'center'>";	//1 - begin
+	temp += "<ul class = 'tab'>";
+	temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Info')\">Info</a></li>";
+	temp += "<li><a href = 'javascript:void(0)' class = 'tablinks' onclick = \"openCity(event,'Manual')\">Manual</a></li>";
+	temp += "</ul>";
+
+	temp += "<div id = 'Info' class = 'tabcontent'>";	//1.1 - begin
+	temp += "<h3>Info</h3>";
+
+	temp += "<div align='center'>";
+	temp += "<br>Setpoint: ";
+	temp += "<div align='center' id = 'currentSetpoint'>"; temp += "</div>";
+	temp += "<br>Temperature: ";
+	temp += "<div align='center' id = 'currentTemp'>"; temp += "</div>";
+	temp += "</div><br>Heater state: "; temp += stateInfo; temp += "<br>";
+
+	temp += "</div>";		//1.1 - end
+
+	temp += "<div id = 'Manual' class = 'tabcontent'>";	//1.2 - begin
+	temp += "<h3>Manual</h3>";
+
+
+	temp += "<div align='center'>";	//1.2.1 - begin
+	temp += "<form action = 'http://192.168.4.1/submit' method = 'POST'>";
+	temp += "	Setpoint: <input type = 'number' name = 'setpoint' min='0'><br>";
+	temp += "	Timer(hh:mm): <input type = 'number' name = 'hours' min='0'>:<input type = 'number' name = 'minutes' min='0'><br>";
+	temp += "	<input type = 'submit' value = 'Send'>";
+
+	/*temp += "<label class = 'switch'>";
+	temp += "<input type = 'checkbox'>";
+	temp += "<div class = 'slider'></div>";
+	temp += "</label>";
+	*/
+	temp += "</div>";	//1.2.1 - end
+	temp += "</div>";			//1.2 - end
+	temp += "</div>";				//1 - end
+									//Tab view HTML end
+
+	temp += "</body>";
+	temp += "</html>";
+
+	server.send(200, "text/html", temp);
+}
+void handleSubmit() {
+
+	ChangeHeatingState();
+
+	if (heatingState == true) {
+		setpoint = server.arg("setpoint").toFloat();
+		hours = server.arg("hours").toInt();
+		minutes = server.arg("minutes").toInt();
+		countimer.setCounter(hours, minutes, 0, countimer.COUNT_DOWN, ChangeHeatingState);
+		countimer.restart();
+		countimer.pause();
+		restartFlag = true;
+	}
+	else {
+		RelayState(LOW, "off");
+		countimer.stop();
+	}
+}
+
+void handleNotFound() {
+	String message = "File Not Found\n\n";
+	message += "URI: ";
+	message += server.uri();
+	message += "\nMethod: ";
+	message += (server.method() == HTTP_GET) ? "GET" : "POST";
+	message += "\nArguments: ";
+	message += server.args();
+	message += "\n";
+
+	for (uint8_t i = 0; i < server.args(); i++) {
+		message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+	}
+
+	server.send(404, "text/plain", message);
+}
+
+String getContentType(String filename) {
+	if (server.hasArg("download")) return "application/octet-stream";
+	else if (filename.endsWith(".htm")) return "text/html";
+	else if (filename.endsWith(".html")) return "text/html";
+	else if (filename.endsWith(".css")) return "text/css";
+	else if (filename.endsWith(".js")) return "application/javascript";
+	else if (filename.endsWith(".png")) return "image/png";
+	else if (filename.endsWith(".gif")) return "image/gif";
+	else if (filename.endsWith(".jpg")) return "image/jpeg";
+	else if (filename.endsWith(".ico")) return "image/x-icon";
+	else if (filename.endsWith(".xml")) return "text/xml";
+	else if (filename.endsWith(".pdf")) return "application/x-pdf";
+	else if (filename.endsWith(".zip")) return "application/x-zip";
+	else if (filename.endsWith(".gz")) return "application/x-gzip";
+	return "text/plain";
+}
+
+bool handleFileRead(String path) {
+	Serial.println("handleFileRead: " + path);
+	if (path.endsWith("/")) path += "index.htm";
+	String contentType = getContentType(path);
+	String pathWithGz = path + ".gz";
+	if (SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)) {
+		if (SPIFFS.exists(pathWithGz))
+			path += ".gz";
+		File file = SPIFFS.open(path, "r");
+		size_t sent = server.streamFile(file, contentType);
+		file.close();
+		return true;
+	}
+	return false;
+}
+
+String formatBytes(size_t bytes) {
+	if (bytes < 1024) {
+		return String(bytes) + "B";
+	}
+	else if (bytes < (1024 * 1024)) {
+		return String(bytes / 1024.0) + "KB";
+	}
+	else if (bytes < (1024 * 1024 * 1024)) {
+		return String(bytes / 1024.0 / 1024.0) + "MB";
+	}
+	else {
+		return String(bytes / 1024.0 / 1024.0 / 1024.0) + "GB";
+	}
+}
 
 void setup(void) {
 	delay(1000);
 	pinMode(RELAY_PIN, OUTPUT);
 	Serial.begin(115200);
 
-	//PWMSimulation.attach(0.015, RunPWM);
 	sensors.begin();
+	sensors.setResolution(9);
 
 	WiFi.softAP(ssid, password);
 	
@@ -156,11 +313,29 @@ void setup(void) {
 
 	countimer.setInterval(RefreshClock, 1000);
 
+	SPIFFS.begin();
+	{
+		Dir dir = SPIFFS.openDir("/");
+		while (dir.next()) {
+			String fileName = dir.fileName();
+			size_t fileSize = dir.fileSize();
+			Serial.printf("FS File: %s, size: %s\n", fileName.c_str(), formatBytes(fileSize).c_str());
+		}
+		Serial.printf("\n");
+	}
+
 	IPAddress myIP = WiFi.softAPIP();
 	Serial.print("AP IP address: ");
 	Serial.println(myIP);
 	server.on("/", handleRoot);
 	server.on("/submit", handleSubmit);
+	server.on("/logo", HTTP_GET, []() {
+		if (!handleFileRead("/logo.jpg")) server.send(404, "text/plain", "FileNotFound");
+	});
+	server.onNotFound([]() {
+		if (!handleFileRead(server.uri()))
+			server.send(404, "text/plain", "FileNotFound");
+	});
 	server.begin();
 	Serial.println("HTTP server started");
 	
