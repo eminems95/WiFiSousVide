@@ -1,3 +1,33 @@
+/*
+* Copyright (c) 2015, Majenko Technologies
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without modification,
+* are permitted provided that the following conditions are met:
+*
+* * Redistributions of source code must retain the above copyright notice, this
+*   list of conditions and the following disclaimer.
+*
+* * Redistributions in binary form must reproduce the above copyright notice, this
+*   list of conditions and the following disclaimer in the documentation and/or
+*   other materials provided with the distribution.
+*
+* * Neither the name of Majenko Technologies nor the names of its
+*   contributors may be used to endorse or promote products derived from
+*   this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
@@ -95,7 +125,6 @@ void handleRoot() {
 	char temporary[2000];
 	temp = "";
 
-
 	temp += "<html>";
 	temp += "<head>";
 	temp += "<title>ESP8266 Demo</title>";
@@ -105,6 +134,13 @@ void handleRoot() {
 	temp += "src: url('/ReklameScript-Regular_DEMO.otf')";
 	temp += "}";
 	temp += "#logo {font-family: 'Century Gothic'; font-size:300%;}";
+	
+	temp += ".Row{ display: table; table-layout: fixed; border-spacing: 10px; }";
+	temp += ".Column{ display: table-cell;}";
+	temp += ".circle{ background-image:linear-gradient(13deg, #3023AE, #C86DD7); border-radius: 100 % ; width: 150px; height: 150px; z-index: -1; position:relative;}";
+	temp += ".circle2{ background-color: #000; border-radius: 100 %; width: 130px; height: 130px; margin: 10px; position: absolute; text-align: center; line-height: 75px;}";
+	
+	
 	temp += "body { background-color: #000000; font-family: Arial, Helvetica, Sans-Serif; Color: #FFFFFF; }";
 	temp += "input[type='text'] { border: 0px; margin-bottom: 5%}";
 	temp += "input[type='number'] { border: 0px; margin-bottom: 5%; width:10%}";
@@ -176,12 +212,37 @@ void handleRoot() {
 	temp += "<div id = 'Info' class = 'tabcontent'>";	//1.1 - begin
 	temp += "<h3>Info</h3>";
 
-	temp += "<div align='center'>";
-	temp += "<br>Setpoint: ";
-	temp += "<div align='center' id = 'currentSetpoint'>"; temp += "</div>";
-	temp += "<br>Temperature: ";
-	temp += "<div align='center' id = 'currentTemp'>"; temp += "</div>";
-	temp += "</div><br>Heater state: "; temp += stateInfo; temp += "<br>";
+	temp += "<div align = 'center' class = 'Row'>";
+		temp += "<div  class = 'Column'>";
+		temp += "Setpoint:";
+			temp += "<div class = 'circle'>";
+				temp += "<div id = 'currentSetpoint' class = 'circle2' >";
+				temp += setpoint;
+				temp += "</div>";
+			temp += "</div>";
+		temp += "</div>";
+
+		temp += "<div class = 'Column'>";
+			temp += "Temperature: ";
+			temp += "<div class = 'circle' >";
+				temp += "<div id = 'currentTemp' class = 'circle2' >";
+				temp += input;
+				temp += "</div>";
+
+			temp += "</div>";
+		temp += "</div>";
+		
+		temp += "<div class = 'Column'>";
+			temp += "Time remain: ";
+				temp += "<div class = 'circle'>";
+
+				temp += "<div id = 'timeRemain' class = 'circle2'>"; 
+				temp += countimer.getCurrentTime();
+				temp += "</div>";
+			temp += "</div>";
+
+		temp += "</div>";
+		temp += "</div>Heater state : &#x23FB;";
 
 	temp += "</div>";		//1.1 - end
 
