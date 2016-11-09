@@ -137,8 +137,8 @@ void handleRoot() {
 	
 	temp += ".Row{ display: table; table-layout: fixed; border-spacing: 10px; }";
 	temp += ".Column{ display: table-cell;}";
-	temp += ".circle{ background-image:linear-gradient(13deg, #3023AE, #C86DD7); border-radius: 100 % ; width: 150px; height: 150px; z-index: -1; position:relative;}";
-	temp += ".circle2{ background-color: #000; border-radius: 100 %; width: 130px; height: 130px; margin: 10px; position: absolute; text-align: center; line-height: 75px;}";
+	temp += ".circle{ background-image:linear-gradient(13deg, #3023AE, #C86DD7); border-radius: 100% ; width: 150px; height: 150px; z-index: -1; position:relative;}";
+	temp += ".circle2{ background-color: #000; border-radius: 100%; width: 130px; height: 130px; margin: 10px; position: absolute; text-align: center; line-height: 75px;}";
 	
 	
 	temp += "body { background-color: #000000; font-family: Arial, Helvetica, Sans-Serif; Color: #FFFFFF; }";
